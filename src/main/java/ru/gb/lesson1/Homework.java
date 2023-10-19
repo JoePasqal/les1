@@ -24,63 +24,69 @@ public class Homework {
 package ru.gb.lesson1;
 
 public class Account {
-    protected double balance;
+    private double balance;
 
-    public Account(double balance) {
-        this.balance = balance;
+    public Account(double initialBalance) {
+        this.balance = initialBalance > 0 ? initialBalance : 0;
     }
 
-    public void put(double amountToPut) {
-        if (amountToPut > 0) {
-            balance += amountToPut;
+    public void put(double amount) {
+        if (amount > 0) {
+            this.balance += amount;
+        } else {
+            System.out.println("Сумма пополнения должна быть положительной.");
         }
     }
 
-    public void take(double amountToTake) {
-        if (amountToTake > 0 && balance >= amountToTake) {
-            balance -= amountToTake;
+    public void take(double amount) {
+        if (amount > 0 && amount <= this.balance) {
+            this.balance -= amount;
+        } else {
+            System.out.println("Сумма снятия должна быть положительной и не превышать баланс счета.");
         }
     }
 
     public double getAmount() {
-        return balance;
+        return this.balance;
     }
 }
 package ru.gb.lesson1;
 
 public class CreditAccount extends Account {
 
-    public CreditAccount(double balance) {
-        super(balance);
+    public CreditAccount(double initialBalance) {
+        super(initialBalance);
     }
 
     @Override
-    public void take(double amountToTake) {
-        double commission = amountToTake * 0.01; // 1% комиссия
-        double totalAmountToTake = amountToTake + commission;
-        super.take(totalAmountToTake); // снимаем с учетом комиссии
+    public void take(double amount) {
+        double amountWithCommission = amount * 1.01; // Комиссия 1%
+        super.take(amountWithCommission);
     }
 }
 package ru.gb.lesson1;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class DepositAccount extends Account {
     private LocalDate lastTakeDate;
 
-    public DepositAccount(double balance) {
-        super(balance);
-        this.lastTakeDate = LocalDate.now().minusMonths(1); // Устанавливаем дату последнего снятия на месяц назад для возможности снятия после создания счета
+    public DepositAccount(double initialBalance) {
+        super(initialBalance);
+        this.lastTakeDate = LocalDate.now().minusMonths(1); // Дата последнего снятия установлена на месяц назад для возможности снятия после создания счета
     }
 
     @Override
-    public void take(double amountToTake) {
-        LocalDate now = LocalDate.now();
-        if (lastTakeDate.until(now, ChronoUnit.MONTHS) >= 1) { // проверяем, прошел ли месяц с последнего снятия
-            super.take(amountToTake);
-            lastTakeDate = now; // обновляем дату последнего снятия
-        } else {
+    public void take(double amount) {
+        LocalDate currentDate = LocalDate.now();
+        long monthsBetween = ChronoUnit.MONTHS.between(this.lastTakeDate, currentDate);
+
+        if (monthsBetween < 1) {
             System.out.println("Средства можно снимать не чаще одного раза в месяц.");
+        } else {
+            super.take(amount);
+            this.lastTakeDate = currentDate;
         }
     }
 }
